@@ -29,7 +29,8 @@ Public Class ThreadedPage
 
     Public Sub TimerTick()
         If ClockBlock is nothing then ClockBlock=Me.Template.FindName("ClockBlock", Me)
-        ClockBlock.text = now.ToString("HH:mm:ss")
+        If not ClockBlock Is Nothing Then ClockBlock.text = now.ToString("HH:mm:ss")
+        
     End Sub
 
     Friend Sub UpdateStatus(NewStatus as string)
