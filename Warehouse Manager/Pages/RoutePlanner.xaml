@@ -1,0 +1,17 @@
+﻿<local:ThreadedPage x:Class="RoutePlanner"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:Warehouse_Manager"
+      mc:Ignorable="d"
+      Title="Route Planner" Template="{DynamicResource ThreadedPageTemplate}" d:DesignWidth="863" d:DesignHeight="568">
+    <Grid x:Name="RoutePlannerGrid" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
+        <ScrollViewer Margin="211,77,10,5">
+            <StackPanel x:Name="RouteList" VerticalAlignment="Top" />
+        </ScrollViewer>
+        <TextBlock x:Name="textBlock" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Route Planner" VerticalAlignment="Top" FontSize="32" FontFamily="Segoe UI Light"/>
+        <Button x:Name="GetRouteButton" Content="Get Current Route" HorizontalAlignment="Left" Margin="10,77,0,0" VerticalAlignment="Top" Width="128" Height="20" Click="GetRouteButton_Click"/>
+
+    </Grid>
+</local:ThreadedPage>
