@@ -89,5 +89,15 @@ Class MainWindow
         
 
     End Sub
+
+    Private Sub RibbonWindow_Closing(sender As Object, e As ComponentModel.CancelEventArgs) Handles RibbonWindow.Closing
+        For each Child as TabItem In MainWindowTabControl.Items
+            Try
+                DirectCast(Child,PageFrameTab).Content.TabClosing(e.Cancel)
+            Catch ex As Exception
+
+            End Try
+        Next
+    End Sub
 #End Region
 End Class

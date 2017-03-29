@@ -1,7 +1,7 @@
 ﻿Imports System.ComponentModel
 Imports System.Windows.Threading
 
-Public Class ThreadedPage
+Public MustInherit Class ThreadedPage
     Inherits Page
 
     Friend Overridable function SupportsMultipleTabs() As boolean
@@ -59,6 +59,8 @@ Public Class ThreadedPage
     Friend Overridable Sub WorkerProgress(sender As Object, e As ProgressChangedEventArgs)
         UpdateStatus(e.UserState.tostring)
     End Sub
+
+    Friend MustOverride Sub TabClosing(Byref Cancel As boolean)
 
 End Class
 

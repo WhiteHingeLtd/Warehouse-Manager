@@ -25,8 +25,6 @@ Class RoutePlanner
                 UpdateStatus("Operation Aborted.")
             End If
         End If
-
-        
     End Sub
 
     Private Sub SaveRouteData()
@@ -129,11 +127,6 @@ Class RoutePlanner
         sender.ReleaseMouseCapture()
         
         'Now we can check if we're on top of anything
-        try
-            
-        Catch ex As Exception
-
-        End Try
 
         Try
             RoutePlannerGrid.Children.Remove(sender)
@@ -142,9 +135,9 @@ Class RoutePlanner
             sender.HorizontalAlignment = HorizontalAlignment.Stretch
             dim Inserted as Boolean = False
 
-            VisualTreeHelper.HitTest(RouteList,Nothing,Function(result As HitTestResult)
+            VisualTreeHelper.HitTest(RouteList,Nothing,Function(Result As HitTestResult)
                                                             Try
-                                                                Routelist.Children.INsert(RouteList.Children.IndexOf(result.VisualHit),sender)
+                                                                Routelist.Children.INsert(RouteList.Children.IndexOf(Result.VisualHit),sender)
                                                                 RenderAnimationIn(sender)
                                                                 Inserted = true
                                                                 sender.Background = brushes.LightGreen
@@ -152,7 +145,7 @@ Class RoutePlanner
                                                             Catch ex As Exception
 
                                                             End Try
-                                                            
+                                                            Return HitTestResultBehavior.Continue
                                                End Function, New PointHitTestParameters(e.GetPosition(RouteList)))
 
             If not Inserted then
@@ -209,5 +202,24 @@ Class RoutePlanner
         SaveRouteData
     End Sub
 
+    Friend Overrides Sub TabClosing(Byref Cancel As boolean)
+         if not UnsavedChanges>0 then
+            'Do nothing and let it run
+         Else 
+            Me.Focus()
+            Dim result as MsgBoxResult=MsgBox("You have unsaved changes to your route! Would you like to save them first?", MsgBoxStyle.YesNoCancel, "Route Planner")
+            If result=MsgBoxResult.Yes Then
+                UpdateStatus("Saving Changes.")
+                SaveRouteData
+                UpdateStatus("Changes Saved.")
+            Elseif result=MsgBoxResult.No Then
+                UpdateStatus("Unsaved Changes Discarded.")
+            Else
+                UpdateStatus("Operation Aborted.")
+                Cancel=True
+            End If
+         End If
+
+    End Sub
 
 End Class
