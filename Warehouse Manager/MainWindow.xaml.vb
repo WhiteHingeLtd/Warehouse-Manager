@@ -48,7 +48,7 @@ Class MainWindow
 #Region "Ribbon"
 
     Private Sub Views_SalesDashboardButton_Click(sender As Object, e As RoutedEventArgs) Handles RoutePlannerButton.Click
-        NewTab(New RoutePlanner)
+        NewTab(New RoutePlanner(Me))
     End Sub
 
 #End Region

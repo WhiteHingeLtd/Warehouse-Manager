@@ -1,4 +1,5 @@
 ﻿Imports System.Windows.Media.Animation
+Imports Microsoft.VisualBasic.CompilerServices
 Imports WHLClasses
 
 Class RoutePlanner
@@ -28,58 +29,103 @@ Class RoutePlanner
     End Sub
 
     Private Sub SaveRouteData()
-        Throw New NotImplementedException
+        UpdateStatus("Saving Data...")
+        dim tempKids as New List(Of RoutePlannerData)
+        For each thing As Textblock in RouteList.Children
+            tempKids.Add(thing.tag)
+        Next
+        ProcessInBackground(Sub()
+                                dim Index as Integer = 0
+                                For each RouteItem as RoutePlannerData in tempKids
+                                    Index += 1
+                                    Worker.ReportProgress(0,"Saving Route: " + RouteItem.RouteBlockName+ " ("+FormatPercent(Index/tempKids.Count,0)+")")
+                                    dim Query as String = "UPDATE whldata.location_routing SET RouteIndex="+RouteItem.RouteIndex.ToString()+" WHERE RouteID="+RouteItem.RouteID.ToString()+";"
+                                    MySQL.insertUpdate(Query)
+                                    
+                                Next
+                            End Sub)
+
+        UpdateStatus("Data saved.")
     End Sub
 
     Dim RouteIndexes as new List(Of Integer)
 
+
     Private Sub LoadRouteData()
         UpdateStatus("Waiting for response from database, Please Wait...")
-        ProcessInBackground(Sub()
-                                RouteTable = MySql.SelectDataDictionary("SELECT * FROM whldata.location_routing ORDER BY RouteIndex;")
-                                Worker.ReportProgress(0,"Done.")
-                                End Sub)
-        RouteList.Children.Clear()
-        UnsavedChanges = 0
-        UpdateUnsavedChanges()
-        UpdateStatus("Loading Table...")
-        Routeindexes.Clear()
-        For each Entry as Dictionary(of String, Object) in RouteTable
-            
-            Dim TB As new TextBlock()
-            TB.FontSize = 18
-            TB.Padding=New Thickness(4)
-            TB.Margin=New Thickness(1)
-            TB.Background = Brushes.LightBlue
-            Dim Data as New RoutePlannerData
-            Data.RouteBlockName = entry("RouteBlockName")
-            Data.RouteID = entry("﻿RouteID")
-            Data.RouteIndex = entry("RouteIndex")
-            Data.WarehouseID = entry("WarehouseID")
-            Data.ZoneID = entry("ZoneID")
-            Data.TempID = UnsavedChanges
-            TB.Tag = Data
-            TB.HorizontalAlignment = HorizontalAlignment.Stretch
-            TB.VerticalAlignment = VerticalAlignment.Top
-            TB.Text = DirectCast(TB.Tag,routeplannerdata).RouteBlockName + "         ["  + DirectCast(TB.Tag,routeplannerdata).RouteIndex.ToString() + "]"
-            AddHandler TB.Mouseleftbuttondown, AddressOf Item_MouseDown
-            AddHandler TB.mouseleftbuttonup, AddressOf Item_MouseUp
-            AddHandler TB.MouseMove, AddressOf Item_MouseMove
-            AddHandler TB.MouseWheel, AddressOf Item_Scroll
-            RouteList.Children.Add(TB)
-            RouteIndexes.Add(data.RouteIndex)
-            UnsavedChanges += 1
+        dim WarehouseFilters as new List(Of String)
+        For each child as CheckBox in WarehouseFilterStack.Children
+            if child.IsChecked then
+                WarehouseFilters.Add("WarehouseID="+child.Tag.ToString())
+            End If
         Next
+        If WarehouseFilters.Count > 0 Then
+           
+            dim Query as String = "SELECT * FROM whldata.location_routing WHERE ("+String.Join(" OR ",WarehouseFilters)+") ORDER BY RouteIndex;"
+            ProcessInBackground(Sub()
+                                    RouteTable = MySql.SelectDataDictionary(Query)
+                                    Worker.ReportProgress(0,"Done.")
+                                    End Sub)
+            RouteList.Children.Clear()
+            UnsavedChanges = 0
+            UpdateUnsavedChanges()
+            UpdateStatus("Loading Table...")
+            Routeindexes.Clear()
+            For each Entry as Dictionary(of String, Object) in RouteTable
+            
+                Dim TB As new TextBlock()
+                TB.FontSize = 18
+                TB.Padding=New Thickness(4)
+                TB.Margin=New Thickness(1)
+                TB.Background = Brushes.LightBlue
+                Dim Data as New RoutePlannerData
+                Data.RouteBlockName = entry("RouteBlockName")
+                Data.RouteID = entry("RouteID")
+                Data.RouteIndex = entry("RouteIndex")
+                Data.WarehouseID = entry("WarehouseID")
+                Data.ZoneID = entry("ZoneID")
+                Data.TempID = UnsavedChanges
+                TB.Tag = Data
+                TB.HorizontalAlignment = HorizontalAlignment.Stretch
+                TB.VerticalAlignment = VerticalAlignment.Top
+                TB.Text = DirectCast(TB.Tag,routeplannerdata).RouteBlockName + "         ["  + DirectCast(TB.Tag,routeplannerdata).RouteIndex.ToString() + "]"
+                AddHandler TB.Mouseleftbuttondown, AddressOf Item_MouseDown
+                AddHandler TB.mouseleftbuttonup, AddressOf Item_MouseUp
+                AddHandler TB.MouseMove, AddressOf Item_MouseMove
+                AddHandler TB.MouseWheel, AddressOf Item_Scroll
+                RouteList.Children.Add(TB)
+                RouteIndexes.Add(data.RouteIndex)
+                UnsavedChanges += 1
+            Next
 
-        UnsavedChanges=0
+            UnsavedChanges=0
 
-        UpdateStatus("Done")
+            UpdateStatus("Done")
+        Else
+            UpdateStatus("Operation Cancelled")
+            MessageBox.Show(MainWindowRef,"You must select at least one warehouse to view route data for.","Route Planner",messageboxbutton.OK,MessageBoxImage.Error)
+        End If
     End Sub
 
     Private Sub RoutePlanner_Loaded(sender As Object, e As RoutedEventArgs) Handles Me.Loaded
         UpdateUnsavedChanges()
-        UpdateStatus("Done")
+        
+        UpdateStatus("Loading Warehouses")
+        'Get the Warehouses to fill the warehouse stack panel
+        dim Warehouses as List(Of Dictionary(Of String,Object)) = MySQL.SelectDataDictionary("SELECT * FROM whldata.warehousereference WHERE NOT WarehouseID=3;")
+        For each Warehouse As Dictionary(Of String, Object) in Warehouses
+            Dim WHFilter as New CheckBox 
+            WHFilter.Content = Warehouse("WarehouseReferencecol")
+            WHFilter.Tag = Warehouse("WarehouseID")
+            WHFilter.IsChecked = True
+            WHFilter.Margin = new Thickness(2)
+            WarehouseFilterStack.Children.Add(WHFilter)
+        Next 
 
+        UpdateStatus("Loading Routes")
+        LoadRouteData()
+
+        UpdateStatus("Done")
     End Sub
     
     Dim UnsavedChanges as Integer = 0
@@ -220,6 +266,15 @@ Class RoutePlanner
             End If
          End If
 
+    End Sub
+
+    Friend Sub New(Main As Mainwindow)
+
+        ' This call is required by the designer.
+        InitializeComponent()
+
+        ' Add any initialization after the InitializeComponent() call.
+        SetWindowRef(Main)
     End Sub
 
 End Class

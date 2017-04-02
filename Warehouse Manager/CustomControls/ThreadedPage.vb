@@ -12,6 +12,11 @@ Public MustInherit Class ThreadedPage
     Friend Worker as BackgroundWorker
     dim Status as textblock
     dim ClockBlock as textblock
+    Friend MainWindowRef as MainWindow
+
+    Friend Sub SetWindowRef(Main As MainWindow)
+        MainWindowRef = Main
+    End Sub
     
     Friend Sub New()
         
