@@ -40,7 +40,7 @@ Class RoutePlanner
                                     Index += 1
                                     Worker.ReportProgress(0,"Saving Route: " + RouteItem.RouteBlockName+ " ("+FormatPercent(Index/tempKids.Count,0)+")")
                                     dim Query as String = "UPDATE whldata.location_routing SET RouteIndex="+RouteItem.RouteIndex.ToString()+" WHERE RouteID="+RouteItem.RouteID.ToString()+";"
-                                    MySQL.insertUpdate(Query)
+                                    insertUpdate(Query)
                                     
                                 Next
                             End Sub)
@@ -63,7 +63,7 @@ Class RoutePlanner
            
             dim Query as String = "SELECT * FROM whldata.location_routing WHERE ("+String.Join(" OR ",WarehouseFilters)+") ORDER BY RouteIndex;"
             ProcessInBackground(Sub()
-                                    RouteTable = MySql.SelectDataDictionary(Query)
+                                    RouteTable = SelectDataDictionary(Query)
                                     Worker.ReportProgress(0,"Done.")
                                     End Sub)
             RouteList.Children.Clear()
@@ -112,7 +112,7 @@ Class RoutePlanner
         
         UpdateStatus("Loading Warehouses")
         'Get the Warehouses to fill the warehouse stack panel
-        dim Warehouses as List(Of Dictionary(Of String,Object)) = MySQL.SelectDataDictionary("SELECT * FROM whldata.warehousereference WHERE NOT WarehouseID=3;")
+        dim Warehouses as List(Of Dictionary(Of String,Object)) = SelectDataDictionary("SELECT * FROM whldata.warehousereference;")
         For each Warehouse As Dictionary(Of String, Object) in Warehouses
             Dim WHFilter as New CheckBox 
             WHFilter.Content = Warehouse("WarehouseReferencecol")
